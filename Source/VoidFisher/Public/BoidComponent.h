@@ -7,23 +7,41 @@
 #include "BoidComponent.generated.h"
 
 
-UCLASS( ClassGroup=(Custom), meta=(BlueprintSpawnableComponent) )
+UCLASS( ClassGroup=(Custom), meta=(BlueprintSpawnableComponent), Category="Boid")
 class VOIDFISHER_API UBoidComponent : public UActorComponent
 {
 	GENERATED_BODY()
 
 public:	
-	// Sets default values for this component's properties
 	UBoidComponent();
 
+	TArray<APawn*> NeighboringBoids;
+
+	void UpdateBoidBehavior(float _DeltaTime);
+
+private:
+	FVector BoidDirection = FVector::ZeroVector;
+	UPrimitiveComponent* RootComp = nullptr;
+
+	FVector Cohesion();
+	FVector Alignment();
+	void Separation();
+
+	void TempFindBoidActor();
+
 protected:
-	// Called when the game starts
 	virtual void BeginPlay() override;
-
-public:	
-	// Called every frame
 	virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
-	void Cohesion();
 
-		
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "BoidParameters", meta = (ClampMin = "0", ClampMax = "500"));
+	float MaxSpeed = 50.f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "BoidParameters", meta = (ClampMin = "0", ClampMax = "500"));
+	float RotationRate = 50.f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "BoidParameters", meta = (ClampMin = "0", ClampMax = "5000"));
+	float DetectNeighborRadius = 300.f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "BoidParameters", meta = (ClampMin = "5", ClampMax = "200"));
+	float SeparationRadius = 200.f;
 };
