@@ -44,4 +44,11 @@ protected:
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "BoidParameters", meta = (ClampMin = "5", ClampMax = "200"));
 	float SeparationRadius = 200.f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "BoidParameters", meta = (ClampMin = "0", ClampMax = "1"));
+	float CohesionWeight = .5f;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "BoidParameters", meta = (ClampMin = "0", ClampMax = "1"));
+	float AlignmentWeight = .5;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "BoidParameters", meta = (ClampMin = "0", ClampMax = "1"));
+	float SeparationWeight = .5f;
 };

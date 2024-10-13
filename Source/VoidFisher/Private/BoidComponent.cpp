@@ -37,17 +37,21 @@ void UBoidComponent::TickComponent(float DeltaTime, ELevelTick TickType, FActorC
 
 void UBoidComponent::UpdateBoidBehavior(float _DeltaTime)
 {
-	FVector _newVelocity = FVector::Zero();
-	//FVector _alignment = Alignment();
-	FVector _direction = Cohesion().GetSafeNormal();
-	//_newVelocity += _alignment * _DeltaTime;
-	_newVelocity += _direction * _DeltaTime * MaxSpeed;
-	FVector _targetVelocity = _newVelocity;
-	FRotator _targetRotation = FRotationMatrix::MakeFromX((GetOwner()->GetActorLocation() + _targetVelocity) - GetOwner()->GetActorLocation()).Rotator();
-	FRotator _rotation = FMath::RInterpTo(GetOwner()->GetActorRotation(), _targetRotation, _DeltaTime, RotationRate);
-	GetOwner()->SetActorRotation(_rotation);
-	RootComp->SetPhysicsLinearVelocity(_targetVelocity);
+	FVector _combinedForce = FVector::Zero();
+	FVector _alignment = Alignment() * AlignmentWeight;
+	FVector _cohesion = Cohesion() * CohesionWeight;
+	_combinedForce = _alignment + _cohesion;
+	_combinedForce = _combinedForce.GetSafeNormal();
+	//FRotator _targetRotation = FRotationMatrix::MakeFromX((GetOwner()->GetActorLocation() + _targetVelocity) - GetOwner()->GetActorLocation()).Rotator();
+	FRotator _targetRotation = FRotationMatrix::MakeFromX(_combinedForce).Rotator();
+	FRotator _currentRotation = GetOwner()->GetActorRotation();
+	FRotator _newRotation = FMath::RInterpTo(_currentRotation, _targetRotation, _DeltaTime, RotationRate);
+	FVector _forwardMovement = GetOwner()->GetActorForwardVector() * MaxSpeed * _DeltaTime;
+	FVector _newLocation = GetOwner()->GetActorLocation() + _forwardMovement;
+	GetOwner()->SetActorRotation(_newRotation);
+	GetOwner()->SetActorLocation(_newLocation);
 	GEngine->AddOnScreenDebugMessage(-1, 0.f, FColor::Red, FString::Printf(TEXT("Target Rotation for %s = %s"), *GetOwner()->GetName(), *_targetRotation.ToString()));
+	GEngine->AddOnScreenDebugMessage(-1, 0.f, FColor::Red, FString::Printf(TEXT("Forward Movement for %s = %s"), *GetOwner()->GetName(), *_forwardMovement.ToString()));
 	//RootComp->SetPhysicsLinearVelocity(_targetVelocity);
 	/*
 	FVector NormalizeDirection = BoidDirection.GetSafeNormal();
@@ -60,6 +64,10 @@ void UBoidComponent::UpdateBoidBehavior(float _DeltaTime)
 	*/
 }
 
+/// <summary>
+/// Retourne la direction vers la position du centre des boids
+/// </summary>
+/// <returns></returns>
 FVector UBoidComponent::Cohesion()
 {
 	FVector _steering = FVector::ZeroVector;
@@ -78,7 +86,7 @@ FVector UBoidComponent::Cohesion()
 	}
 	_steering = _total > 0 ? _steering / _total : _steering;
 	_steering -= GetOwner()->GetActorLocation();
-	return _steering;
+	return _steering.GetSafeNormal();
 }
 
 FVector UBoidComponent::Alignment()
