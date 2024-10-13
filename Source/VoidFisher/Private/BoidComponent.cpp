@@ -32,17 +32,21 @@ void UBoidComponent::TickComponent(float DeltaTime, ELevelTick TickType, FActorC
 	GEngine->AddOnScreenDebugMessage(-1, 0.f, FColor::Red, FString::Printf(TEXT("TIIIIICK")));
 	UpdateBoidBehavior(DeltaTime);
 	// ...
-	DrawDebugSphere(GetWorld(), GetOwner()->GetActorLocation(), DetectNeighborRadius, 12, FColor::Red, 0, -1.f, 0, 1.f);
+	DrawDebugSphere(GetWorld(), GetOwner()->GetActorLocation(), SeparationRadius, 12, FColor::Red, 0, -1.f, 0, 1.f);
+	DrawDebugSphere(GetWorld(), GetOwner()->GetActorLocation(), DetectNeighborRadius, 12, FColor::Green, 0, -1.f, 0, 1.f);
 }
 
 void UBoidComponent::UpdateBoidBehavior(float _DeltaTime)
 {
 	FVector _combinedForce = FVector::Zero();
+
 	FVector _alignment = Alignment() * AlignmentWeight;
 	FVector _cohesion = Cohesion() * CohesionWeight;
-	_combinedForce = _alignment + _cohesion;
+	FVector _separation = Separation() * SeparationWeight;
+
+	_combinedForce = _alignment + _cohesion + _separation;
 	_combinedForce = _combinedForce.GetSafeNormal();
-	//FRotator _targetRotation = FRotationMatrix::MakeFromX((GetOwner()->GetActorLocation() + _targetVelocity) - GetOwner()->GetActorLocation()).Rotator();
+	//FRotator _targetRotation = FRotationMatrix::MakeFromX((GetOwner()->GetActorLocation() + _combinedForce) - GetOwner()->GetActorLocation()).Rotator();
 	FRotator _targetRotation = FRotationMatrix::MakeFromX(_combinedForce).Rotator();
 	FRotator _currentRotation = GetOwner()->GetActorRotation();
 	FRotator _newRotation = FMath::RInterpTo(_currentRotation, _targetRotation, _DeltaTime, RotationRate);
@@ -84,7 +88,7 @@ FVector UBoidComponent::Cohesion()
 			}
 		}
 	}
-	_steering = _total > 0 ? _steering / _total : _steering;
+	_steering = _total > 0 ? _steering / _total : GetOwner()->GetActorForwardVector();
 	_steering -= GetOwner()->GetActorLocation();
 	return _steering.GetSafeNormal();
 }
@@ -105,13 +109,32 @@ FVector UBoidComponent::Alignment()
 			}
 		}
 	}
-	_steering = _total > 0 ? _steering /_total : _steering;
+	_steering = _total > 0 ? _steering /_total : GetOwner()->GetActorForwardVector();
 	_steering -= GetOwner()->GetActorForwardVector();
 	return _steering;
 }
 
-void UBoidComponent::Separation()
+FVector UBoidComponent::Separation()
 {
+	FVector _steering = FVector::ZeroVector;
+	uint8 _total = 0;
+	for (APawn* Pawn : NeighboringBoids)
+	{
+		if (Pawn != GetOwner())
+		{
+			float _dist = FVector::Dist(Pawn->GetActorLocation(), GetOwner()->GetActorLocation());
+			if (_dist <= SeparationRadius)
+			{
+				FVector _diff = GetOwner()->GetActorLocation() - Pawn->GetActorLocation();
+				_diff /= _dist;
+				_steering += _diff;
+				_total++;
+			}
+		}
+	}
+	_steering = _total > 0 ? _steering / _total : GetOwner()->GetActorForwardVector();
+	//_steering -= GetOwner()->GetActorLocation();
+	return _steering.GetSafeNormal();
 }
 
 /// <summary>

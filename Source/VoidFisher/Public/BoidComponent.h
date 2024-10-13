@@ -25,7 +25,7 @@ private:
 
 	FVector Cohesion();
 	FVector Alignment();
-	void Separation();
+	FVector Separation();
 
 	void TempFindBoidActor();
 
@@ -33,22 +33,20 @@ protected:
 	virtual void BeginPlay() override;
 	virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "BoidParameters", meta = (ClampMin = "0", ClampMax = "500"));
-	float MaxSpeed = 50.f;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "BoidStats", meta = (ClampMin = "0", ClampMax = "500"));
+	float MaxSpeed = 250.f;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "BoidStats", meta = (ClampMin = "0", ClampMax = "500"));
+	float RotationRate = 3.f;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "BoidParameters", meta = (ClampMin = "0", ClampMax = "500"));
-	float RotationRate = 50.f;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "BoidAreaDetection", meta = (ClampMin = "0", ClampMax = "5000"));
+	float DetectNeighborRadius = 2500.f;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "BoidAreaDetection", meta = (ClampMin = "5", ClampMax = "2500"));
+	float SeparationRadius = 500.f;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "BoidParameters", meta = (ClampMin = "0", ClampMax = "5000"));
-	float DetectNeighborRadius = 300.f;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "BoidParameters", meta = (ClampMin = "5", ClampMax = "200"));
-	float SeparationRadius = 200.f;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "BoidParameters", meta = (ClampMin = "0", ClampMax = "1"));
-	float CohesionWeight = .5f;
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "BoidParameters", meta = (ClampMin = "0", ClampMax = "1"));
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "BoidWeightForce", meta = (ClampMin = "0", ClampMax = "1"));
+	float CohesionWeight = .3f;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "BoidWeightForce", meta = (ClampMin = "0", ClampMax = "1"));
 	float AlignmentWeight = .5;
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "BoidParameters", meta = (ClampMin = "0", ClampMax = "1"));
-	float SeparationWeight = .5f;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "BoidWeightForce", meta = (ClampMin = "0", ClampMax = "1"));
+	float SeparationWeight = .8f;
 };
