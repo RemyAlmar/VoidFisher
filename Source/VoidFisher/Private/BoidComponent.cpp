@@ -1,0 +1,159 @@
+// Fill out your copyright notice in the Description page of Project Settings.
+
+#include "BoidComponent.h"
+#include "Math/UnrealMathUtility.h"
+#include "EngineUtils.h"
+#include "GameFramework/Pawn.h"
+
+UBoidComponent::UBoidComponent()
+{
+	PrimaryComponentTick.bCanEverTick = true;
+	BoidDirection = FVector(FMath::RandRange(0, 1), FMath::RandRange(0, 1), FMath::RandRange(0, 1));
+}
+
+// Called when the game starts
+void UBoidComponent::BeginPlay()
+{
+	Super::BeginPlay();
+	RootComp = Cast<UPrimitiveComponent>(GetOwner()->GetRootComponent());
+	if (RootComp == nullptr)
+	{
+		UE_LOG(LogTemp, Error, TEXT("Root Component of %s is not a primitive"), *GetOwner()->GetName())
+	}
+	TempFindBoidActor();
+	// ...
+	
+}
+
+// Called every frame
+void UBoidComponent::TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction)
+{
+	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
+	GEngine->AddOnScreenDebugMessage(-1, 0.f, FColor::Red, FString::Printf(TEXT("TIIIIICK")));
+	UpdateBoidBehavior(DeltaTime);
+	// ...
+	DrawDebugSphere(GetWorld(), GetOwner()->GetActorLocation(), SeparationRadius, 12, FColor::Red, 0, -1.f, 0, 1.f);
+	DrawDebugSphere(GetWorld(), GetOwner()->GetActorLocation(), DetectNeighborRadius, 12, FColor::Green, 0, -1.f, 0, 1.f);
+}
+
+void UBoidComponent::UpdateBoidBehavior(float _DeltaTime)
+{
+	FVector _combinedForce = FVector::Zero();
+
+	FVector _alignment = Alignment() * AlignmentWeight;
+	FVector _cohesion = Cohesion() * CohesionWeight;
+	FVector _separation = Separation() * SeparationWeight;
+
+	_combinedForce = _alignment + _cohesion + _separation;
+	_combinedForce = _combinedForce.GetSafeNormal();
+	//FRotator _targetRotation = FRotationMatrix::MakeFromX((GetOwner()->GetActorLocation() + _combinedForce) - GetOwner()->GetActorLocation()).Rotator();
+	FRotator _targetRotation = FRotationMatrix::MakeFromX(_combinedForce).Rotator();
+	FRotator _currentRotation = GetOwner()->GetActorRotation();
+	FRotator _newRotation = FMath::RInterpTo(_currentRotation, _targetRotation, _DeltaTime, RotationRate);
+	FVector _forwardMovement = GetOwner()->GetActorForwardVector() * MaxSpeed * _DeltaTime;
+	FVector _newLocation = GetOwner()->GetActorLocation() + _forwardMovement;
+	GetOwner()->SetActorRotation(_newRotation);
+	GetOwner()->SetActorLocation(_newLocation);
+	GEngine->AddOnScreenDebugMessage(-1, 0.f, FColor::Red, FString::Printf(TEXT("Target Rotation for %s = %s"), *GetOwner()->GetName(), *_targetRotation.ToString()));
+	GEngine->AddOnScreenDebugMessage(-1, 0.f, FColor::Red, FString::Printf(TEXT("Forward Movement for %s = %s"), *GetOwner()->GetName(), *_forwardMovement.ToString()));
+	//RootComp->SetPhysicsLinearVelocity(_targetVelocity);
+	/*
+	FVector NormalizeDirection = BoidDirection.GetSafeNormal();
+	FVector _Velocity = NormalizeDirection * MaxSpeed;
+	if (UPrimitiveComponent* _RootComponent = Cast<UPrimitiveComponent>(GetOwner()->GetRootComponent()))
+	{
+		_RootComponent->SetPhysicsLinearVelocity(_Velocity);
+	}
+	GEngine->AddOnScreenDebugMessage(-1, 0.f, FColor::Red, FString::Printf(TEXT("Current Velocity = %s"), *_Velocity.ToString()));
+	*/
+}
+
+/// <summary>
+/// Retourne la direction vers la position du centre des boids
+/// </summary>
+/// <returns></returns>
+FVector UBoidComponent::Cohesion()
+{
+	FVector _steering = FVector::ZeroVector;
+	uint8 _total = 0;
+	for (APawn* Pawn : NeighboringBoids)
+	{
+		if (Pawn != GetOwner())
+		{
+			float _dist = FVector::Dist(Pawn->GetActorLocation(), GetOwner()->GetActorLocation());
+			if (_dist <= DetectNeighborRadius)
+			{
+				_steering += Pawn->GetActorLocation();
+				_total++;
+			}
+		}
+	}
+	_steering = _total > 0 ? _steering / _total : GetOwner()->GetActorForwardVector();
+	_steering -= GetOwner()->GetActorLocation();
+	return _steering.GetSafeNormal();
+}
+
+FVector UBoidComponent::Alignment()
+{
+	FVector _steering = FVector::ZeroVector;
+	uint8 _total = 0;
+	for (APawn* Pawn : NeighboringBoids)
+	{
+		if (Pawn != GetOwner())
+		{
+			float _dist = FVector::Dist(Pawn->GetActorLocation(), GetOwner()->GetActorLocation());
+			if (_dist <= DetectNeighborRadius)
+			{
+				_steering += Pawn->GetActorForwardVector();
+				_total++;
+			}
+		}
+	}
+	_steering = _total > 0 ? _steering /_total : GetOwner()->GetActorForwardVector();
+	_steering -= GetOwner()->GetActorForwardVector();
+	return _steering;
+}
+
+FVector UBoidComponent::Separation()
+{
+	FVector _steering = FVector::ZeroVector;
+	uint8 _total = 0;
+	for (APawn* Pawn : NeighboringBoids)
+	{
+		if (Pawn != GetOwner())
+		{
+			float _dist = FVector::Dist(Pawn->GetActorLocation(), GetOwner()->GetActorLocation());
+			if (_dist <= SeparationRadius)
+			{
+				FVector _diff = GetOwner()->GetActorLocation() - Pawn->GetActorLocation();
+				_diff /= _dist;
+				_steering += _diff;
+				_total++;
+			}
+		}
+	}
+	_steering = _total > 0 ? _steering / _total : GetOwner()->GetActorForwardVector();
+	//_steering -= GetOwner()->GetActorLocation();
+	return _steering.GetSafeNormal();
+}
+
+/// <summary>
+/// Recupere les pawn du monde ayant boid comme component 
+/// </summary>
+void UBoidComponent::TempFindBoidActor()
+{
+	UWorld* _World = GetWorld();
+	if (!_World) return;
+	TArray<APawn*> PawnWithBoid;
+	for (TActorIterator<APawn> It(_World); It; ++It)
+	{
+		APawn* _Pawn = *It;
+		if (UBoidComponent* _BoidComp = _Pawn->FindComponentByClass<UBoidComponent>())
+		{
+			PawnWithBoid.Add(_Pawn);
+			GEngine->AddOnScreenDebugMessage(-1, 0.f, FColor::Red, FString::Printf(TEXT("Pawn Added = %s"), *_Pawn->GetName()));
+		}
+	}
+	NeighboringBoids = PawnWithBoid;
+}
+
