@@ -21,11 +21,23 @@ public:
 
 private:
 	FVector BoidDirection = FVector::ZeroVector;
+	FVector CombinedForce = FVector::ZeroVector;
 	UPrimitiveComponent* RootComp = nullptr;
 
-	FVector Cohesion();
-	FVector Alignment();
-	FVector Separation();
+	void GetSteering(TArray<APawn*>& _NearestPawn);
+
+	void Cohesion(FVector& _steering, uint8& _Total, APawn& _Neighbor);
+	void Alignment(FVector& _steering, uint8& _Total, APawn& _Neighbor);
+	void Separation(FVector& _steering, uint8& _Total, APawn& _Neighbor);
+
+	FVector GetCohesionDirection(FVector& _steering, uint8& _Total);
+	FVector GetAlignmentDirection(FVector& _steering, uint8& _Total);
+	FVector GetSeparationDirection(FVector& _steering, uint8& _Total);
+
+	void SetCombinedForce(FVector& _Cohesion, FVector& _Alignment, FVector& _Separation);
+	void SetNewRotation(float _DeltaTime);
+	void SetNewLocation(float _DeltaTime);
+
 
 	void TempFindBoidActor();
 
