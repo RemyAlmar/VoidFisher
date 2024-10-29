@@ -3,13 +3,21 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "CatcheableData.generated.h"
 
-/**
- * 
- */
-class VOIDFISHER_API CatcheableData
+USTRUCT(BlueprintType)
+struct VOIDFISHER_API FCatcheableData
 {
 public:
-	CatcheableData();
-	~CatcheableData();
+	GENERATED_BODY();
+
+	UPROPERTY(BlueprintReadWrite, EditAnywhere)
+	float Size = 1.2f;
+
+	UPROPERTY(BlueprintReadWrite, EditAnywhere)
+	FString Name = "DefaultName";
+
+
+	FCatcheableData();
+	~FCatcheableData();
 };
