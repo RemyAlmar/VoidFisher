@@ -22,4 +22,6 @@ class VOIDFISHER_API ICatcheable
 public:
 	UFUNCTION(BlueprintCallable, BlueprintNativeEvent, Category="Struct|GetData")
 	FCatcheableData GetData();
+	UFUNCTION(BlueprintCallable, BlueprintNativeEvent, Category="Struct|IsCatcheable")
+	bool IsCatcheable();
 };

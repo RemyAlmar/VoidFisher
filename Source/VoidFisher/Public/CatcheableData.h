@@ -3,6 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "VoidFisher/Enum/CreatureType.h"
 #include "CatcheableData.generated.h"
 
 USTRUCT(BlueprintType)
@@ -12,10 +13,14 @@ public:
 	GENERATED_BODY();
 
 	UPROPERTY(BlueprintReadWrite, EditAnywhere)
-	float Size = 1.2f;
-
+	ECreatureType CreatureType;
 	UPROPERTY(BlueprintReadWrite, EditAnywhere)
-	FString Name = "DefaultName";
+	int Quantity = 0;
+	UPROPERTY(BlueprintReadWrite, EditAnywhere)
+	float Size = 1.2f;
+	UPROPERTY(BlueprintReadWrite, EditAnywhere)
+	float Weight = 1.2f;
+
 
 
 	FCatcheableData();
