@@ -15,7 +15,7 @@ public:
 	UPROPERTY(BlueprintReadWrite, EditAnywhere)
 	ECreatureType CreatureType;
 	UPROPERTY(BlueprintReadWrite, EditAnywhere)
-	int Quantity = 0;
+	int Quantity = 1;
 	UPROPERTY(BlueprintReadWrite, EditAnywhere)
 	float Size = 1.2f;
 	UPROPERTY(BlueprintReadWrite, EditAnywhere)
