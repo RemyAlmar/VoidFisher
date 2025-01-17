@@ -1,0 +1,32 @@
+float accum = 0.0; // Accumulateur pour la densité
+float3 rayPos = Position; // Position initiale du rayon
+float stepSize = 0.05; // Taille d'un pas pour le raymarching
+
+for (
+int i = 0;i <
+RayStep; i++) {
+    // Générer un noise 3D directement dans la boucle
+float3 pos = frac(rayPos * Frequency); // Répète les coordonnées entre 0 et 1
+float n = dot(pos, float3(12.9898, 78.233, 45.164)); // Produit un hash
+    n = sin(n) * 43758.5453; // Génère du pseudo-noise
+float noise = frac(n); // Normalise dans la plage [0, 1]
+    
+    // Appliquer une intensité au noise
+    noise = pow(noise, Intensity);
+
+    // Accumuler la densité
+    accum += noise *
+Density;
+
+    // Avancer le rayon
+    rayPos+= RayDir *
+stepSize;
+}
+
+// Normaliser l'accumulateur pour éviter des valeurs trop élevées
+accum = saturate(accum / (RayStep * Density));
+
+// Interpoler les couleurs en fonction de l'accumulateur
+float3 nebulaColor = lerp(Color1, Color2, accum);
+return
+nebulaColor;
